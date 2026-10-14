@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Simulator: 5-Year Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; }
+        .modal { display: none; background-color: rgba(0,0,0,0.5); }
+        .modal.active { display: flex; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+<div id="app" class="max-w-7xl mx-auto p-4 flex flex-col md:flex-row gap-6">
+    
+    <!-- Left Column: Dashboard -->
+    <div class="w-full md:w-1/3 flex flex-col gap-4">
+        <div class="bg-white p-5 rounded-xl shadow">
+            <h1 class="text-2xl font-bold text-blue-600 mb-2">Life Dashboard</h1>
+            <div class="text-xl font-bold mb-4 border-b pb-2">Age: <span id="ui-age" class="text-green-600">14</span></div>
+            
+            <div class="bg-blue-50 p-3 rounded mb-4 border border-blue-100">
+                <h3 class="text-xs font-bold text-blue-700 uppercase">Cumulative GPA</h3>
+                <div class="text-2xl font-black text-blue-900" id="ui-gpa">0.0</div>
+            </div>
+
+            <h2 class="font-bold text-gray-500 uppercase text-xs tracking-wider">Net Worth</h2>
+            <div class="text-3xl font-black text-blue-700 mb-4" id="ui-networth">$0</div>
+
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="bg-green-50 p-2 rounded shadow-sm border border-green-100 text-center">
+                    <h3 class="text-[10px] font-bold text-green-700 uppercase tracking-tighter">Cash</h3>
+                    <div class="text-md font-bold text-green-800" id="ui-cash">$0</div>
+                </div>
+                <div class="bg-teal-50 p-2 rounded shadow-sm border border-teal-100 text-center">
+                    <h3 class="text-[10px] font-bold text-teal-700 uppercase tracking-tighter">Emergency</h3>
+                    <div class="text-md font-bold text-teal-800" id="ui-efund">$0</div>
+                </div>
+                <div class="bg-red-50 p-2 rounded shadow-sm border border-red-100 text-center">
+                    <h3 class="text-[10px] font-bold text-red-700 uppercase tracking-tighter">Debt</h3>
+                    <div class="text-md font-bold text-red-800" id="ui-debt">$0</div>
+                </div>
+            </div>
+
+            <h2 class="font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">Assets</h2>
+            <ul class="text-sm space-y-1 mb-4">
+                <li class="flex justify-between"><span>Stocks/Bonds:</span> <span id="ui-stocks" class="font-semibold">$0</span></li>
+                <li class="flex justify-between text-purple-700 font-bold"><span>401(k) Retirement:</span> <span id="ui-retirement">$0</span></li>
+                <li class="flex justify-between"><span>Primary Home:</span> <span id="ui-home-val" class="font-semibold">$0</span></li>
+                <li class="flex justify-between"><span>Cabin/Second Home:</span> <span id="ui-cabin-val" class="font-semibold">$0</span></li>
+                <li class="flex justify-between text-indigo-600 font-bold"><span>Rental Real Estate:</span> <span id="ui-re-val">$0</span></li>
+            </ul>
+
+            <h2 class="font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">Liabilities</h2>
+            <ul class="text-sm space-y-1 mb-4 text-red-600">
+                <li class="flex justify-between font-bold text-red-800"><span>Credit Card (28%):</span> <span id="ui-debt-cc">$0</span></li>
+                <li class="flex justify-between"><span>Student Loans (12%):</span> <span id="ui-debt-student" class="font-semibold">$0</span></li>
+                <li class="flex justify-between"><span>Auto Loans (9%):</span> <span id="ui-debt-auto" class="font-semibold">$0</span></li>
+                <li class="flex justify-between"><span>Primary Mortgage (7%):</span> <span id="ui-debt-mortgage" class="font-semibold">$0</span></li>
+                <li class="flex justify-between text-orange-600 font-bold"><span>Real Estate Debt (7%):</span> <span id="ui-debt-re">$0</span></li>
+            </ul>
+
+            <h2 class="font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">Cash Flow (Yearly)</h2>
+            <ul class="text-sm space-y-1">
+                <li class="flex justify-between text-green-600"><span>Your Salary:</span> <span id="ui-inc-you" class="font-semibold">$0</span></li>
+                <li class="flex justify-between text-green-600"><span>Spouse Salary:</span> <span id="ui-inc-spouse" class="font-semibold">$0</span></li>
+                <li class="flex justify-between text-indigo-600 font-bold"><span>Net Rental Income:</span> <span id="ui-inc-rental">$0</span></li>
+                <li class="flex justify-between text-red-500 border-t mt-1 pt-1"><span>Tithing/Charity (10%):</span> <span id="ui-exp-tithing" class="font-semibold">$0</span></li>
+                <li class="flex justify-between text-red-500"><span>Taxes:</span> <span id="ui-exp-taxes" class="font-semibold">$0</span></li>
+                <li class="flex justify-between text-red-500"><span>Health Insurance:</span> <span id="ui-exp-insurance" class="font-semibold">$0</span></li>
+                <li class="flex justify-between text-red-500"><span>Living Expenses:</span> <span id="ui-exp-living" class="font-semibold">$0</span></li>
+                <li class="flex justify-between text-red-500"><span>Debt Payments:</span> <span id="ui-exp-debt" class="font-semibold">$0</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Middle Column: Choices -->
+    <div class="w-full md:w-1/3 flex flex-col gap-4 order-first md:order-none">
+        <div class="bg-blue-600 text-white p-5 rounded-xl shadow">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-2xl font-bold">Decisions for Age <span id="decision-age">14</span></h1>
+                <button onclick="restartGame()" class="text-xs bg-red-500 hover:bg-red-600 px-2 py-1 rounded shadow uppercase font-bold">Restart</button>
+            </div>
+            
+            <div class="mb-4 space-y-2 bg-blue-700 p-3 rounded-lg text-sm font-bold shadow-inner">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="ch-tithing" class="w-4 h-4" checked onchange="renderUI()"> 
+                    Pay 10% Tithing / Charity
+                </label>
+                <div id="wrap-insurance" style="display:none;" class="flex flex-col gap-1">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="ch-insurance" class="w-4 h-4" checked onchange="renderUI()"> 
+                        Pay Health Insurance Premium
+                    </label>
+                    <span id="insurance-cost-label" class="text-xs text-blue-200 ml-6">Cost: $0/yr (On parents' plan until 26)</span>
+                </div>
+            </div>
+
+            <div id="choices-container" class="space-y-4 mb-6"></div>
+            
+            <div id="adult-finance-panel" style="display:none;">
+                
+                <div class="border-t border-blue-400 pt-4 mb-4">
+                    <label class="block text-sm font-bold mb-1 text-purple-300">Pre-Tax 401(k) Contribution (Max $24.5k or 25%)</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="ch-401k" class="w-full p-2 rounded text-black" placeholder="$ Amount" oninput="update401kDisplay()">
+                        <button onclick="max401k()" class="bg-purple-800 hover:bg-purple-900 text-xs px-3 rounded font-bold transition">MAX</button>
+                    </div>
+                    <div id="ui-tax-savings" class="text-xs text-green-300 font-bold mt-1">Tax savings: $0</div>
+                </div>
+
+                <div class="border-t border-blue-400 pt-4 mb-4">
+                    <label class="block text-sm font-bold mb-1 text-teal-200">Transfer to Emergency Fund</label>
+                    <input type="number" id="ch-efund-add" class="w-full p-2 rounded text-black" placeholder="$ Amount from Cash">
+                </div>
+
+                <div class="border-t border-blue-400 pt-4 mb-4">
+                    <label class="block text-sm font-bold mb-1">Make an extra debt payment</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="extra-payment" class="w-full p-2 rounded text-black" placeholder="$ Amount">
+                        <button onclick="fillMaxDebt()" class="bg-blue-800 hover:bg-blue-900 text-xs px-3 rounded font-bold transition">Max</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="liquidation-panel"></div>
+
+            <button onclick="advanceYear()" class="w-full bg-white text-blue-700 font-black text-xl py-4 rounded-lg shadow hover:bg-gray-100 transition mb-4">ADVANCE 1 YEAR ➔</button>
+
+            <button onclick="showFinalReport()" class="w-full bg-indigo-900 text-indigo-100 font-bold text-sm py-3 rounded-lg shadow hover:bg-indigo-800 border border-indigo-400 transition">🔮 Project to Age 65 / Final Report</button>
+        </div>
+    </div>
+
+    <!-- Right Column: Life Picture & Logs -->
+    <div class="w-full md:w-1/3 flex flex-col gap-4">
+        <div class="bg-white p-5 rounded-xl shadow text-center">
+            <h2 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">Your Life Picture</h2>
+            <div class="flex flex-wrap justify-center gap-4 text-4xl mb-4" id="life-picture-people">🧑</div>
+            <div class="flex flex-wrap justify-center gap-4 text-4xl mb-4" id="life-picture-assets">🛏️</div>
+        </div>
+
+        <div class="bg-gray-800 text-green-400 p-4 rounded-xl shadow flex-grow overflow-y-auto font-mono text-sm" style="max-height: 400px;">
+            <h2 class="font-bold text-white mb-2">Event Log</h2>
+            <ul id="event-log" class="space-y-1">
+                <li>System initialized. You are 14 years old.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Year Summary Modal -->
+<div id="summary-modal" class="modal fixed inset-0 z-50 items-center justify-center">
+    <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full mx-4 relative text-center">
+        <h2 class="text-3xl font-black text-blue-600 mb-2">Year Summary</h2>
+        <h3 class="text-xl font-bold text-gray-700 mb-4">Welcome to age <span id="modal-age"></span>!</h3>
+        <ul id="modal-events" class="text-left space-y-2 mb-6 text-gray-600 font-medium text-sm border-b pb-4"></ul>
+        <div class="text-left text-xs space-y-1 mb-6 bg-gray-100 p-3 rounded text-gray-700 font-mono">
+            <h4 class="font-bold text-gray-800 uppercase border-b border-gray-300 pb-1 mb-2">Market & Debt Update:</h4>
+            <div id="modal-market-stats"></div>
+        </div>
+        <button onclick="closeModal('summary-modal')" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 w-full">Continue</button>
+    </div>
+</div>
+
+<!-- Final Report Modal -->
+<div id="final-report-modal" class="modal fixed inset-0 z-50 items-center justify-center overflow-y-auto py-10">
+    <div class="bg-white p-8 rounded-xl shadow-2xl max-w-2xl w-full mx-4 relative">
+        <h2 class="text-4xl font-black text-indigo-700 mb-2 text-center">Retirement Projection</h2>
+        <p class="text-center text-gray-500 mb-6">If you keep living exactly as you are right now, here is what your finances will look like at Age 65.</p>
+        <div class="bg-indigo-50 border border-indigo-200 p-6 rounded-lg text-center mb-6">
+            <h3 class="text-sm font-bold text-indigo-800 uppercase tracking-widest">Projected Net Worth (Age 65)</h3>
+            <div class="text-5xl font-black text-indigo-600 my-2" id="report-projected-nw">$0</div>
+            <p class="text-sm text-gray-600" id="report-projection-details"></p>
+        </div>
+        <h3 class="text-2xl font-bold text-red-600 mb-4 border-b pb-2">The Cost of Your Choices</h3>
+        <p class="text-sm text-gray-600 mb-4">Every dollar you spent on depreciating assets or lifestyle inflation was a dollar that could not be invested. Here are your "Opportunity Costs" based on historic 7% market growth:</p>
+        <ul id="report-opp-costs" class="space-y-3 mb-8 text-sm text-gray-700 bg-red-50 p-4 rounded-lg border border-red-100"></ul>
+        <button onclick="closeModal('final-report-modal')" class="bg-indigo-600 text-white font-bold py-4 px-8 rounded-lg hover:bg-indigo-700 w-full">Back to Simulator</button>
+    </div>
+</div>
+
+<script>
+    const DEGREES = {
+        'Doctor': { yrs: 8, cost: 40000, salary: 250000, gpa: 3.5 },
+        'Lawyer': { yrs: 7, cost: 35000, salary: 160000, gpa: 3.2 },
+        'Engineer': { yrs: 4, cost: 15000, salary: 90000, gpa: 3.0 },
+        'Computer Science': { yrs: 4, cost: 12000, salary: 100000, gpa: 3.0 },
+        'Finance/Business': { yrs: 4, cost: 12000, salary: 75000, gpa: 2.5 },
+        'Nursing': { yrs: 4, cost: 10000, salary: 75000, gpa: 3.0 },
+        'Education': { yrs: 4, cost: 8000, salary: 50000, gpa: 2.5 },
+        'History': { yrs: 4, cost: 10000, salary: 40000, gpa: 2.0 },
+        'Art/Music': { yrs: 4, cost: 15000, salary: 35000, gpa: 2.0 }
+    };
+
+    let state;
+
+    function initGame() {
+        state = {
+            age: 14, cash: 0, emergencyFund: 0, stocks: 0, gpaHistory: [], gpa: 0.0,
+            assets: { home: 0, realEstate: 0, cabin: 0, retirement: 0 },
+            debt: { student: 0, auto: 0, mortgage: 0, realEstate: 0, cc: 0 },
+            rentals: 0, carsOwned: [], 
+            careerTrack: 'None', militaryYears: 0, giBill: false, collegeYearsLeft: 0, currentDegree: null, isCollegeWorking: false,
+            spouse: false, spouseWorking: true, spouseSalary: 0, spouseBaseMod: 0,
+            kids: [], housing: 'Parents', vacation: 'None',
+            tithing: true, insurance: true, lastYearSavings: 0, bigPurchases: [],
+            log: [], modalEvents: []
+        };
+        logEvent("System initialized. You are 14 years old.");
+        renderUI();
+    }
+
+    const formatMoney = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+
+    function logEvent(msg) {
+        state.log.unshift(`Age ${state.age}: ${msg}`);
+        state.modalEvents.push(msg);
+        const ul = document.getElementById('event-log');
+        ul.innerHTML = state.log.map(l => `<li>> ${l}</li>`).join('');
+    }
+
+    function chargeEmergency(amount, description) {
+        let remaining = amount;
+        if (state.emergencyFund > 0) {
+            let take = Math.min(state.emergencyFund, remaining);
+            state.emergencyFund -= take;
+            remaining -= take;
+            logEvent(`${description}: Paid ${formatMoney(take)} from Emergency Fund.`);
+        }
+        if (remaining > 0 && state.cash > 0) {
+            let take = Math.min(state.cash, remaining);
+            state.cash -= take;
+            remaining -= take;
+            logEvent(`${description}: Paid ${formatMoney(take)} from Cash.`);
+        }
+        if (remaining > 0) {
+            state.debt.cc += remaining;
+            logEvent(`${description}: SHORTFALL! Borrowed ${formatMoney(remaining)} on 28% Credit Card.`);
+        }
+    }
+
+    function recordOppCost(name, excessAmount) {
+        state.bigPurchases.push({ age: state.age, name: name, amount: excessAmount });
+    }
+
+    function calculateIncome() {
+        let you = 0;
+        let spouse = 0;
+        
+        if (state.spouse && state.spouseWorking) {
+            if (state.age < 25) {
+                spouse = 25000 + (Math.max(0, state.age - 20) * 1500); 
+            } else if (state.age < 30) {
+                spouse = 45000 + ((state.age - 25) * 5000); 
+            } else {
+                spouse = 80000 + ((state.age - 30) * 2500); 
+                if (spouse > 120000) spouse = 120000;
+            }
+            spouse += (state.spouseBaseMod || 0);
+        }
+        state.spouseSalary = spouse; 
+        
+        if (state.collegeYearsLeft > 0) {
+            you = state.isCollegeWorking ? 25000 : 15000;
+            if (state.giBill) you += 20000;
+        } else if (state.careerTrack === 'Military Enlisted') you = 45000 + (state.militaryYears * 1000);
+        else if (state.careerTrack === 'Military Officer') you = 75000 + (state.militaryYears * 2000);
+        else if (state.careerTrack === 'Military HPSP') you = state.militaryYears > 4 ? 160000 : 75000;
+        else if (state.careerTrack === 'Trade') you = 65000 + ((state.age - 22) * 1500);
+        else if (state.careerTrack === 'Professional' && state.currentDegree) {
+            let base = DEGREES[state.currentDegree].salary;
+            you = base + (Math.random() * 10000 - 5000) + ((state.age - 25) * 2000);
+        }
+        else if (state.careerTrack === 'Workforce') you = 35000 + ((state.age - 20) * 1000);
+        
+        if (state.age >= 14 && state.age <= 17) you = 0; 
+
+        // CRITICAL FIX: Real Estate Income perfectly subtracts Debt Service (7% int + 2% prin) from the gross ROI
+        let rentalNOI = state.assets.realEstate * 0.08;
+        let rentalInterest = state.debt.realEstate * 0.07;
+        let rentalPrincipal = state.debt.realEstate * 0.02;
+        let rentalNet = state.rentals > 0 ? (rentalNOI - rentalInterest - rentalPrincipal) : 0;
+
+        return { you, spouse, rental: rentalNet };
+    }
+
+    function getInsurancePremium() {
+        if (state.age < 26) return 0; // Parents plan
+        if (!state.insurance || state.careerTrack.includes('Military')) return 0;
+        return 4000 + (state.spouse ? 4000 : 0) + (state.kids.length * 2000);
+    }
+
+    function calculateExpenses(inc, c401k = 0) {
+        let living = 0;
+        if (state.age >= 20) {
+            living = state.housing === 'Parents' ? 6000 : (state.spouse ? 35000 : 20000); 
+            if (state.housing === 'Condo') living += 6000;
+            else if (state.housing === 'Starter House') living += 9000;
+            else if (state.housing === 'Nice House') living += 15000;
+
+            state.kids.forEach(age => {
+                living += 6000;
+                if (state.spouseWorking && age < 12) living += 15000;
+            });
+
+            if (state.vacation === 'road') living += 3000;
+            if (state.vacation === 'premium') living += 10000;
+        }
+
+        let insuranceCost = getInsurancePremium();
+
+        // Deferred student loans: no cashflow impact while in college
+        let studentInterestFlow = state.collegeYearsLeft > 0 ? 0 : (state.debt.student * 0.12);
+        let studentPrincipalFlow = state.collegeYearsLeft > 0 ? 0 : (state.debt.student * 0.02);
+
+        // CRITICAL FIX: EXCLUDE state.debt.realEstate from these global calculations
+        let interest = (state.debt.cc * 0.28) + studentInterestFlow + (state.debt.auto * 0.09) + (state.debt.mortgage * 0.07);
+        // We will store true interest for the modal logs, but the cash flow debtService below must not double charge RE
+        state.lastInterestPaid = interest + (state.rentals > 0 ? state.debt.realEstate * 0.07 : 0);
+
+        let principal = (state.debt.cc * 0.05) + studentPrincipalFlow + (state.debt.auto * 0.05) + (state.debt.mortgage * 0.02);
+        
+        let debtService = interest + principal; // Pure cashflow drag
+        
+        let grossInc = inc.you + inc.spouse;
+        let taxableInc = Math.max(0, grossInc - c401k);
+        let tithing = state.tithing && grossInc > 0 ? (grossInc * 0.10) : 0;
+        let taxes = state.age >= 20 && taxableInc > 25000 ? taxableInc * 0.22 : 0;
+
+        return { living, insurance: insuranceCost, debt: debtService, taxes, tithing, pureInterest: interest };
+    }
+
+    function max401k() {
+        let inc = calculateIncome();
+        let maxAllowed = Math.min(24500, inc.you * 0.25);
+        document.getElementById('ch-401k').value = Math.floor(maxAllowed);
+        update401kDisplay();
+    }
+
+    function update401kDisplay() {
+        let val = parseFloat(document.getElementById('ch-401k')?.value) || 0;
+        let savings = val * 0.22; // 22% tax bracket assumption
+        document.getElementById('ui-tax-savings').innerText = `Tax savings: ${formatMoney(savings)}`;
+    }
+
+    function renderUI() {
+        state.tithing = document.getElementById('ch-tithing').checked;
+        if (document.getElementById('ch-insurance')) state.insurance = document.getElementById('ch-insurance').checked;
+
+        document.getElementById('ui-age').innerText = state.age;
+        document.getElementById('decision-age').innerText = state.age;
+        document.getElementById('ui-gpa').innerText = state.gpa.toFixed(2);
+        
+        const totalDebt = state.debt.cc + state.debt.student + state.debt.auto + state.debt.mortgage + state.debt.realEstate;
+        const totalAssets = state.cash + state.emergencyFund + state.stocks + state.assets.retirement + state.assets.home + state.assets.cabin + state.assets.realEstate;
+        const netWorth = totalAssets - totalDebt;
+
+        document.getElementById('ui-networth').innerText = formatMoney(netWorth);
+        document.getElementById('ui-cash').innerText = formatMoney(state.cash);
+        document.getElementById('ui-efund').innerText = formatMoney(state.emergencyFund);
+        document.getElementById('ui-debt').innerText = formatMoney(totalDebt);
+
+        document.getElementById('ui-stocks').innerText = formatMoney(state.stocks);
+        document.getElementById('ui-retirement').innerText = formatMoney(state.assets.retirement);
+        document.getElementById('ui-home-val').innerText = formatMoney(state.assets.home);
+        document.getElementById('ui-cabin-val').innerText = formatMoney(state.assets.cabin);
+        document.getElementById('ui-re-val').innerText = formatMoney(state.assets.realEstate);
+
+        document.getElementById('ui-debt-cc').innerText = formatMoney(state.debt.cc);
+        document.getElementById('ui-debt-student').innerText = formatMoney(state.debt.student);
+        document.getElementById('ui-debt-auto').innerText = formatMoney(state.debt.auto);
+        document.getElementById('ui-debt-mortgage').innerText = formatMoney(state.debt.mortgage);
+        document.getElementById('ui-debt-re').innerText = formatMoney(state.debt.realEstate);
+
+        let input401k = parseFloat(document.getElementById('ch-401k')?.value) || 0;
+        const inc = calculateIncome();
+        const exp = calculateExpenses(inc, input401k);
+        
+        document.getElementById('ui-inc-you').innerText = formatMoney(inc.you);
+        document.getElementById('ui-inc-spouse').innerText = formatMoney(inc.spouse);
+        document.getElementById('ui-inc-rental').innerText = formatMoney(inc.rental);
+        
+        document.getElementById('ui-exp-tithing').innerText = formatMoney(exp.tithing);
+        document.getElementById('ui-exp-taxes').innerText = formatMoney(exp.taxes);
+        document.getElementById('ui-exp-insurance').innerText = formatMoney(exp.insurance);
+        document.getElementById('ui-exp-living').innerText = formatMoney(exp.living);
+        document.getElementById('ui-exp-debt').innerText = formatMoney(exp.debt);
+
+        document.getElementById('adult-finance-panel').style.display = state.age >= 20 ? 'block' : 'none';
+        
+        if (state.age >= 20 && !state.careerTrack.includes('Military')) {
+            document.getElementById('wrap-insurance').style.display = 'flex';
+            let costStr = state.age < 26 ? `Cost: $0/yr (On parents' plan until 26)` : `Cost: ${formatMoney(getInsurancePremium())}/yr`;
+            document.getElementById('insurance-cost-label').innerText = costStr;
+        } else {
+            document.getElementById('wrap-insurance').style.display = 'none';
+            state.insurance = true; 
+        }
+
+        renderLifePicture();
+        renderChoices();
+    }
+
+    function renderLifePicture() {
+        let people = '🧑';
+        if (state.spouse) people += ' 👩';
+        state.kids.forEach(age => {
+            if (age < 3) people += ' 👶';
+            else if (age < 12) people += ' 🧒';
+            else people += ' 👦';
+        });
+        document.getElementById('life-picture-people').innerHTML = people;
+        let assets = '';
+        if (state.housing === 'Parents') assets += '🛏️ (Parents)';
+        else if (state.housing === 'Apartment') assets += '🏢 (Apt)';
+        else if (state.housing === 'Condo') assets += '🏠 (Condo)';
+        else if (state.housing === 'Starter House') assets += '🏡 (House)';
+        else if (state.housing === 'Nice House') assets += '🏰 (Nice House)';
+        if (state.assets.cabin > 0) assets += ' 🏔️ (Cabin)';
+        state.carsOwned.forEach(c => {
+            if (c.type === 'beater') assets += ' 🚙';
+            else if (c.type === 'sedan' || c.type === 'lux') assets += ' 🚗';
+            else if (c.type === 'suv' || c.type === 'truck') assets += ' 🛻';
+            else if (c.type === 'exotic') assets += ' 🏎️';
+        });
+        for (let i = 0; i < state.rentals; i++) assets += ' 🏘️';
+        document.getElementById('life-picture-assets').innerHTML = assets;
+    }
+
+    function advanceYear() {
+        state.modalEvents = [];
+        let marketStatsHtml = '';
+        const choices = getSelectedChoices();
+
+        // 1. Process Asset Liquidations FIRST
+        if (choices.sellStocks > 0 && choices.sellStocks <= state.stocks) {
+            state.stocks -= choices.sellStocks;
+            state.cash += choices.sellStocks;
+            logEvent(`Sold ${formatMoney(choices.sellStocks)} in stocks.`);
+        }
+
+        if (choices.sellRentals > 0 && choices.sellRentals <= state.rentals) {
+            let avgVal = state.assets.realEstate / state.rentals;
+            let avgDebt = state.debt.realEstate / state.rentals;
+            let totalValSold = avgVal * choices.sellRentals;
+            let totalDebtSold = avgDebt * choices.sellRentals;
+            let equity = totalValSold - totalDebtSold;
+            state.rentals -= choices.sellRentals;
+            state.assets.realEstate -= totalValSold;
+            state.debt.realEstate -= totalDebtSold;
+            state.cash += equity;
+            logEvent(`Sold ${choices.sellRentals} rental property(s), freed ${formatMoney(equity)} in equity.`);
+        }
+
+        if (choices.sellCarIdx !== 'none') {
+            let idx = parseInt(choices.sellCarIdx);
+            let car = state.carsOwned[idx];
+            let depValue = Math.max(500, car.cost * Math.pow(0.85, car.age));
+            state.cash += depValue;
+            logEvent(`Sold ${car.type} for ${formatMoney(depValue)}.`);
+            state.carsOwned.splice(idx, 1);
+        }
+
+        // 2. Process all other choices
+        processChoices(choices);
+
+        let inc = calculateIncome();
+        let exp = calculateExpenses(inc, choices.invest401k);
+        let netCashFlow = (inc.you + inc.spouse + inc.rental) - exp.living - exp.insurance - exp.debt - exp.taxes - exp.tithing - choices.invest401k;
+
+        if (choices.invest401k > 0) {
+            state.assets.retirement += choices.invest401k;
+            logEvent(`Contributed ${formatMoney(choices.invest401k)} to Pre-Tax 401(k).`);
+        }
+
+        let efAdd = parseFloat(document.getElementById('ch-efund-add')?.value) || 0;
+        if (efAdd > 0 && efAdd <= state.cash + netCashFlow) {
+            state.emergencyFund += efAdd;
+            netCashFlow -= efAdd;
+            logEvent(`Moved ${formatMoney(efAdd)} into Emergency Fund.`);
+        }
+
+        let extraPay = parseFloat(document.getElementById('extra-payment')?.value) || 0;
+        if (extraPay > 0 && extraPay <= state.cash + netCashFlow) {
+            let remainingPay = extraPay;
+            netCashFlow -= extraPay;
+            let targets = ['cc', 'auto', 'student', 'mortgage', 'realEstate'];
+            for (let t of targets) {
+                if (state.debt[t] > 0 && remainingPay > 0) {
+                    let payAmt = Math.min(state.debt[t], remainingPay);
+                    state.debt[t] -= payAmt;
+                    remainingPay -= payAmt;
+                    logEvent(`Paid ${formatMoney(payAmt)} extra toward ${t} debt.`);
+                }
+            }
+        }
+
+        state.cash += netCashFlow;
+        state.lastYearSavings = (choices.investTeen || choices.invest || choices.invest401k || 0) + netCashFlow;
+        
+        if (state.cash < 0) {
+            logEvent(`Cash shortfall! Added ${formatMoney(Math.abs(state.cash))} to Credit Card debt at 28% interest.`);
+            state.debt.cc += Math.abs(state.cash);
+            state.cash = 0;
+        }
+
+        // Principal Deductions from standard payments (ensures debt actually goes down)
+        state.debt.cc = Math.max(0, state.debt.cc - (state.debt.cc * 0.05));
+        state.debt.auto = Math.max(0, state.debt.auto - (state.debt.auto * 0.05));
+        state.debt.mortgage = Math.max(0, state.debt.mortgage - (state.debt.mortgage * 0.02));
+        if (state.rentals > 0) state.debt.realEstate = Math.max(0, state.debt.realEstate - (state.debt.realEstate * 0.02));
+
+        // Deferred Student Loan Accrual vs Payment
+        if (state.collegeYearsLeft > 0 && state.debt.student > 0) {
+            let accrued = state.debt.student * 0.12;
+            state.debt.student += accrued;
+            logEvent(`Student loan deferred. Accrued ${formatMoney(accrued)} in interest (12%).`);
+        } else if (state.collegeYearsLeft === 0 && state.debt.student > 0) {
+            state.debt.student = Math.max(0, state.debt.student - (state.debt.student * 0.02));
+        }
+
+        // --- MARKET DYNAMICS ---
+        if (state.stocks > 0) {
+            let stockReturn = (Math.random() * 0.40) - 0.15;
+            let stockProfit = state.stocks * stockReturn;
+            state.stocks += stockProfit;
+            marketStatsHtml += `<div>${stockProfit >= 0 ? '🟢' : '🔴'} <b>Stocks:</b> ${(stockReturn*100).toFixed(1)}% (${formatMoney(stockProfit)})</div>`;
+        }
+        if (state.assets.retirement > 0) {
+            let retReturn = (Math.random() * 0.35) - 0.10;
+            let retProfit = state.assets.retirement * retReturn;
+            state.assets.retirement += retProfit;
+            marketStatsHtml += `<div>${retProfit >= 0 ? '🟢' : '🔴'} <b>401(k):</b> ${(retReturn*100).toFixed(1)}% (${formatMoney(retProfit)})</div>`;
+        }
+
+        let reReturn = (Math.random() * 0.20) - 0.05;
+        let totalReValue = state.assets.home + state.assets.cabin + state.assets.realEstate;
+        if (totalReValue > 0) {
+            let reProfit = totalReValue * reReturn;
+            if (state.assets.home > 0) state.assets.home += (state.assets.home * reReturn);
+            if (state.assets.cabin > 0) state.assets.cabin += (state.assets.cabin * reReturn);
+            if (state.assets.realEstate > 0) state.assets.realEstate += (state.assets.realEstate * reReturn);
+            marketStatsHtml += `<div>${reProfit >= 0 ? '🟢' : '🔴'} <b>Real Estate:</b> ${(reReturn*100).toFixed(1)}% (${formatMoney(reProfit)})</div>`;
+        }
+
+        if (exp.pureInterest > 0) {
+            marketStatsHtml += `<div class="text-red-600 mt-2">💸 <b>Interest Paid:</b> ${formatMoney(exp.pureInterest)} burned to the banks.</div>`;
+        } else {
+            marketStatsHtml += `<div class="text-green-600 mt-2">🛡️ <b>Interest Paid:</b> $0! You are debt free!</div>`;
+        }
+        document.getElementById('modal-market-stats').innerHTML = marketStatsHtml || "No investments or debt.";
+
+        // --- RANDOM EVENTS & AGING ---
+        if (state.age >= 20) {
+            state.carsOwned.forEach(car => {
+                car.age++; 
+                let breakdownChance = car.type === 'beater' ? 0.5 + (car.age * 0.1) : 0.1 + (car.age * 0.05);
+                if (Math.random() < breakdownChance) {
+                    let repair = car.type === 'exotic' ? 5000 + (car.age * 1000) : (500 + Math.random() * 1000) + (car.age * 200);
+                    chargeEmergency(repair, `Car repair (${car.type}, Age ${car.age})`);
+                }
+            });
+
+            if (state.housing !== 'Parents' && state.housing !== 'Apartment' && Math.random() < 0.2) {
+                let repair = 1000 + (Math.random() * 4000);
+                chargeEmergency(repair, "Home repair needed");
+            }
+            if (state.rentals > 0 && Math.random() < 0.2) {
+                let repair = 1500 + (Math.random() * 3000);
+                chargeEmergency(repair, "Rental property maintenance");
+            }
+            if (Math.random() < 0.05) {
+                logEvent("LAID OFF! You lost your primary salary for this year.");
+                chargeEmergency(inc.you, "Loss of Income"); 
+            }
+            if (Math.random() < 0.1) {
+                if (state.age < 26 || state.insurance) {
+                    let med = 2000 + Math.random() * 5000;
+                    chargeEmergency(med, "Health Emergency (Insured)");
+                } else {
+                    let med = 50000 + Math.random() * 50000; 
+                    chargeEmergency(med, "CATASTROPHIC Health Emergency (No Insurance)");
+                }
+            }
+        }
+
+        state.age++;
+        for (let i=0; i<state.kids.length; i++) state.kids[i]++;
+        if (state.collegeYearsLeft > 0) {
+            state.collegeYearsLeft--;
+            if (state.collegeYearsLeft === 0) {
+                state.careerTrack = 'Professional';
+                state.isCollegeWorking = false;
+                logEvent(`Graduated! Degree in ${state.currentDegree}.`);
+            }
+        }
+        if (state.careerTrack.includes('Military')) state.militaryYears++;
+
+        if(document.getElementById('extra-payment')) document.getElementById('extra-payment').value = '';
+        if(document.getElementById('ch-efund-add')) document.getElementById('ch-efund-add').value = '';
+        if(document.getElementById('ch-401k')) { document.getElementById('ch-401k').value = ''; update401kDisplay(); }
+        
+        renderUI();
+        
+        document.getElementById('modal-age').innerText = state.age;
+        document.getElementById('modal-events').innerHTML = state.modalEvents.map(e => `<li>• ${e}</li>`).join('');
+        document.getElementById('summary-modal').classList.add('active');
+    }
+
+    function renderChoices() {
+        const c = document.getElementById('choices-container');
+        let html = '';
+
+        if (state.age >= 14 && state.age <= 17) {
+            html += `
+            <div class="bg-blue-700 p-4 rounded-lg mb-4 shadow-inner">
+                <h3 class="font-bold mb-3 text-white">Daily Time Allocation (Max 8 hrs)</h3>
+                <label class="block text-xs font-bold text-blue-200 mb-1">Academics / Study (Impacts GPA)</label>
+                <input type="range" id="slide-acad" min="0" max="8" value="2" class="w-full mb-3">
+                <label class="block text-xs font-bold text-blue-200 mb-1">Work Part-Time (Impacts Savings)</label>
+                <input type="range" id="slide-work" min="0" max="8" value="2" class="w-full mb-3">
+                <label class="block text-xs font-bold text-blue-200 mb-1">Fun / Friends</label>
+                <input type="range" id="slide-fun" min="0" max="8" value="4" class="w-full">
+                <div class="flex justify-between items-center text-yellow-300 font-bold mt-3 text-sm">
+                    <span>Earn: <span id="teen-earn-disp">$3,000</span></span>
+                    <span>GPA: <span id="teen-gpa-disp">2.5</span></span>
+                </div>
+            </div>`;
+            
+            html += `
+            <h3 class="font-bold mb-1 text-white">Teen Purchases:</h3>
+            <select id="ch-teen" class="w-full p-2 rounded text-black mb-4">
+                <option value="none">No extra purchases</option>
+                <option value="console">Buy Game Console (-$500 Cash)</option>
+                <option value="car" ${state.age >= 16 ? '':'disabled'}>Buy Beater Car (-$3,000 Cash) ${state.age < 16 ? '(Unlocks Age 16)' : ''}</option>
+            </select>`;
+
+            html += `
+            <h3 class="font-bold mb-1 text-white">Investing:</h3>
+            <div class="flex gap-2 mb-2">
+                <input type="number" id="ch-invest-teen" class="w-full p-2 rounded text-black" placeholder="Invest $ in Stocks">
+            </div>`;
+        }
+
+        if (state.age >= 18 && state.age <= 19) {
+            html += `<div class="bg-white text-black p-3 rounded font-bold mb-2 shadow">Serving LDS Mission</div>`;
+            if (state.carsOwned.length > 0) {
+                html += `<label class="flex items-center gap-2 mt-2 text-white font-bold"><input type="checkbox" id="ch-sell-mission-car"> Sell old car before mission for cash value</label>`;
+            }
+        }
+
+        if (state.age === 20 && state.careerTrack === 'None') {
+            html += `<h3 class="font-bold mb-1 text-white">Career Launch Path:</h3>
+            <select id="ch-career" class="w-full p-2 rounded text-black mb-2" onchange="document.getElementById('deg-wrap').style.display = (this.value === 'college' ? 'block' : 'none')">
+                <option value="none">Select Path...</option>
+                <option value="military">Enlist Military (Active Duty)</option>
+                <option value="officer" ${state.gpa < 3.0 ? 'disabled':''}>ROTC / Military Officer Track ${state.gpa < 3.0 ? '(Req. 3.0 GPA)' : ''}</option>
+                <option value="hpsp" ${state.gpa < 3.5 ? 'disabled':''}>Military HPSP Medical Track ${state.gpa < 3.5 ? '(Req. 3.5 GPA)' : ''}</option>
+                <option value="college">Go to College</option>
+                <option value="trade">Trade School (2 yrs)</option>
+                <option value="workforce">Enter Workforce Directly</option>
+            </select>
+            <div id="deg-wrap" style="display:none;" class="bg-blue-700 p-3 rounded mt-2 border border-blue-400">
+                <h3 class="font-bold mb-1 text-blue-200">Select Degree:</h3>
+                <select id="ch-college" class="w-full p-2 rounded text-black mb-2">
+                    <option value="none">Select Degree...</option>
+                    ${Object.keys(DEGREES).map(d => `<option value="${d}" ${state.gpa < DEGREES[d].gpa ? 'disabled':''}>${d} (${DEGREES[d].yrs} yrs) ${state.gpa < DEGREES[d].gpa ? '- GPA too low':''}</option>`).join('')}
+                </select>
+                <label class="flex items-center gap-2 mt-2 text-white font-bold"><input type="checkbox" id="ch-college-work"> Work Part-Time ($25k/yr, +20% Time in School)</label>
+            </div>`;
+        }
+
+        if (state.careerTrack === 'Military Enlisted' && state.militaryYears >= 4) {
+            html += `<h3 class="font-bold mb-1 text-yellow-300">Military Contract Complete</h3>
+            <select id="ch-military-exit" class="w-full p-2 rounded text-black mb-2" onchange="document.getElementById('mil-deg-wrap').style.display = (this.value === 'gibill' ? 'block' : 'none')">
+                <option value="stay">Re-enlist (Stay in Military)</option>
+                <option value="gibill">Leave & Use GI Bill for College</option>
+                <option value="leave">Leave & Enter Workforce</option>
+            </select>
+            <div id="mil-deg-wrap" style="display:none;" class="bg-blue-700 p-3 rounded mt-2 border border-blue-400">
+                <h3 class="font-bold mb-1 text-blue-200">Select Degree:</h3>
+                <select id="ch-college-mil" class="w-full p-2 rounded text-black mb-2">
+                    <option value="none">Select Degree...</option>
+                    ${Object.keys(DEGREES).map(d => `<option value="${d}" ${state.gpa < DEGREES[d].gpa ? 'disabled':''}>${d} (${DEGREES[d].yrs} yrs) ${state.gpa < DEGREES[d].gpa ? '- GPA too low':''}</option>`).join('')}
+                </select>
+                <label class="flex items-center gap-2 mt-2 text-white font-bold"><input type="checkbox" id="ch-college-work-mil"> Work Part-Time ($25k/yr, +20% Time in School)</label>
+            </div>`;
+        }
+
+        if (state.age >= 20) {
+            if (!state.spouse) {
+                html += `<label class="flex items-center gap-2 mt-4 text-white font-bold"><input type="checkbox" id="ch-marry"> Prioritize finding a spouse</label>`;
+            } else {
+                html += `<label class="flex items-center gap-2 mt-4 text-white font-bold"><input type="checkbox" id="ch-kids"> Have a baby this year</label>`;
+                html += `<select id="ch-spouse-work" class="w-full p-2 rounded text-black mt-2 font-bold">
+                    <option value="work" ${state.spouseWorking ? 'selected':''}>Spouse Works (Pay Daycare if kids)</option>
+                    <option value="home" ${!state.spouseWorking ? 'selected':''}>Spouse Stays Home (Save Daycare)</option>
+                </select>`;
+            }
+
+            html += `<h3 class="font-bold mt-4 mb-1">Housing Upgrade:</h3>
+            <select id="ch-house" class="w-full p-2 rounded text-black mb-2">
+                <option value="none">Stay current (${state.housing})</option>
+                <option value="parents" ${state.housing === 'Parents' ? 'disabled':''}>Move back with Parents ($6k/yr living exp)</option>
+                <option value="apt">Rent Apartment ($1,500/mo)</option>
+                <option value="condo">Buy Condo ($30k down, $300k loan)</option>
+                <option value="starter">Buy Starter House ($45k down, $450k loan)</option>
+                <option value="nice">Buy Nice House ($75k down, $750k loan)</option>
+            </select>`;
+
+            if (state.housing !== 'Parents' && state.housing !== 'Apartment') {
+                html += `<select id="ch-house-action" class="w-full p-2 rounded text-black mb-2 text-sm bg-yellow-100">
+                    <option value="sell">If upgrading, SELL current home for equity</option>
+                    <option value="keep">If upgrading, KEEP current home as Rental</option>
+                </select>`;
+            }
+
+            html += `<h3 class="font-bold mt-2 mb-1">Buy a Vehicle:</h3>
+            <select id="ch-car" class="w-full p-2 rounded text-black mb-2">
+                <option value="none">Don't buy a car</option>
+                <option value="beaterCash">Buy Beater ($5k Cash)</option>
+                <option value="sedanCash">Buy Used Sedan ($17k Cash)</option>
+                <option value="sedanFin">Finance Used Sedan ($2k down, $15k loan)</option>
+                <option value="suvCash">Buy Family SUV ($40k Cash)</option>
+                <option value="suvFin">Finance Family SUV ($5k down, $35k loan)</option>
+                <option value="truckCash">Buy Truck ($58k Cash)</option>
+                <option value="truckFin">Finance Truck ($8k down, $50k loan)</option>
+                <option value="luxCash">Buy Lux Sedan ($70k Cash)</option>
+                <option value="luxFin">Finance Lux Sedan ($10k down, $60k loan)</option>
+                <option value="corvetteCash">Buy Corvette ($100k Cash)</option>
+                <option value="corvetteFin">Finance Corvette ($20k down, $80k loan)</option>
+                <option value="bugattiCash">Buy Bugatti ($3M Cash)</option>
+            </select>`;
+
+            html += `<div class="flex gap-2 mt-2">
+                <input type="number" id="ch-invest" class="w-full p-2 rounded text-black" placeholder="Invest extra $ in Brokerage Stocks">
+            </div>`;
+
+            html += `<select id="ch-vacation" class="w-full p-2 rounded text-black mt-2">
+                <option value="none">Staycation ($0)</option>
+                <option value="road">Road Trip / Camping ($3k)</option>
+                <option value="premium">Premium Out-of-State ($10k)</option>
+            </select>`;
+
+            html += `<h3 class="font-bold mt-4 mb-1 text-indigo-300">Real Estate Investing:</h3>
+            <select id="ch-rental" class="w-full p-2 rounded text-black mb-2">
+                <option value="none">No action</option>
+                <option value="buyCash">Buy Rental ($60k Cash Down, $240k Mtg)</option>
+                <option value="buyCabin">Buy Cabin/2nd Home ($50k Cash Down, $250k Mtg)</option>`;
+            
+            let currentEquity = (state.assets.realEstate * 0.80) - state.debt.realEstate;
+            if (state.rentals > 0) {
+                html += `<option value="leverage" ${currentEquity >= 60000 ? '' : 'disabled'}>Leverage Equity for New Rental (Need $60k avail. You have: ${formatMoney(currentEquity)})</option>`;
+            }
+            html += `</select>`;
+        }
+        
+        c.innerHTML = html;
+
+        let liqHtml = '';
+        liqHtml += `<div class="border-t border-blue-400 pt-4 mb-4">
+            <label class="block text-sm font-bold mb-1">Sell Stocks/Bonds for Cash (Avail: <span id="ui-sell-stocks-liq">${formatMoney(state.stocks)}</span>)</label>
+            <input type="number" id="sell-stocks-amt" class="w-full p-2 rounded text-black" placeholder="$ Amount to sell">
+        </div>`;
+        if (state.rentals > 0) {
+            liqHtml += `<div class="border-t border-blue-400 pt-4 mb-4">
+                <label class="block text-sm font-bold mb-1">Sell Rental Properties (You own: ${state.rentals})</label>
+                <input type="number" id="ch-sell-rentals" max="${state.rentals}" class="w-full p-2 rounded text-black" placeholder="Number of rentals to sell">
+            </div>`;
+        }
+        if (state.carsOwned.length > 0 && state.age >= 20) {
+            liqHtml += `<div class="border-t border-blue-400 pt-4 mb-4">
+                <label class="block text-sm font-bold mb-1">Sell a Vehicle</label>
+                <select id="ch-sell-car-idx" class="w-full p-2 rounded text-black">
+                    <option value="none">Keep all vehicles</option>
+                    ${state.carsOwned.map((car, idx) => {
+                        let depValue = Math.max(500, car.cost * Math.pow(0.85, car.age));
+                        return `<option value="${idx}">Sell ${car.type} (Age ${car.age}) for ${formatMoney(depValue)}</option>`;
+                    }).join('')}
+                </select>
+            </div>`;
+        }
+        document.getElementById('liquidation-panel').innerHTML = liqHtml;
+
+        if (document.getElementById('slide-acad')) {
+            document.getElementById('slide-acad').addEventListener('input', updateTeenSliders);
+            document.getElementById('slide-work').addEventListener('input', updateTeenSliders);
+            document.getElementById('slide-fun').addEventListener('input', updateTeenSliders);
+            updateTeenSliders.call(document.getElementById('slide-acad'));
+        }
+    }
+
+    function updateTeenSliders() {
+        let elAcad = document.getElementById('slide-acad');
+        let elWork = document.getElementById('slide-work');
+        let elFun = document.getElementById('slide-fun');
+        if (!elAcad || !elWork || !elFun) return;
+        let sA = parseInt(elAcad.value) || 0;
+        let sW = parseInt(elWork.value) || 0;
+        let sF = parseInt(elFun.value) || 0;
+        if (sA + sW + sF > 8) {
+            if (this.id === 'slide-acad') { sF = Math.max(0, 8 - sA - sW); sW = Math.max(0, 8 - sA - sF); } 
+            else if (this.id === 'slide-work') { sA = Math.max(0, 8 - sW - sF); sF = Math.max(0, 8 - sW - sA); } 
+            else { sA = Math.max(0, 8 - sF - sW); sW = Math.max(0, 8 - sF - sA); }
+            elAcad.value = sA; elWork.value = sW; elFun.value = sF;
+        }
+        let earn = sW * 1500;
+        let yearGpa = sA >= 4 ? 4.0 : sA >= 3 ? 3.5 : sA >= 2 ? 2.5 : sA >= 1 ? 1.5 : 1.0;
+        document.getElementById('teen-earn-disp').innerText = formatMoney(earn);
+        document.getElementById('teen-gpa-disp').innerText = yearGpa.toFixed(1);
+    }
+
+    function getSelectedChoices() {
+        return {
+            slideAcad: document.getElementById('slide-acad')?.value,
+            slideWork: document.getElementById('slide-work')?.value,
+            teen: document.getElementById('ch-teen')?.value,
+            investTeen: parseFloat(document.getElementById('ch-invest-teen')?.value) || 0,
+            sellMissionCar: document.getElementById('ch-sell-mission-car')?.checked,
+            career: document.getElementById('ch-career')?.value,
+            college: document.getElementById('ch-college')?.value,
+            collegeWork: document.getElementById('ch-college-work')?.checked,
+            collegeMil: document.getElementById('ch-college-mil')?.value,
+            collegeWorkMil: document.getElementById('ch-college-work-mil')?.checked,
+            milExit: document.getElementById('ch-military-exit')?.value,
+            marry: document.getElementById('ch-marry')?.checked,
+            kids: document.getElementById('ch-kids')?.checked,
+            spouseWork: document.getElementById('ch-spouse-work')?.value,
+            house: document.getElementById('ch-house')?.value,
+            houseAction: document.getElementById('ch-house-action')?.value,
+            car: document.getElementById('ch-car')?.value,
+            invest: parseFloat(document.getElementById('ch-invest')?.value) || 0,
+            invest401k: parseFloat(document.getElementById('ch-401k')?.value) || 0,
+            vacation: document.getElementById('ch-vacation')?.value,
+            rental: document.getElementById('ch-rental')?.value,
+            sellRentals: parseInt(document.getElementById('ch-sell-rentals')?.value) || 0,
+            sellCarIdx: document.getElementById('ch-sell-car-idx')?.value || 'none',
+            sellStocks: parseFloat(document.getElementById('sell-stocks-amt')?.value) || 0
+        };
+    }
+
+    function processChoices(c) {
+        if (state.age >= 14 && state.age <= 17) {
+            let sA = parseInt(c.slideAcad) || 0;
+            let sW = parseInt(c.slideWork) || 0;
+            let earn = sW * 1500;
+            let yearGpa = sA >= 4 ? 4.0 : sA >= 3 ? 3.5 : sA >= 2 ? 2.5 : sA >= 1 ? 1.5 : 1.0;
+            state.gpaHistory.push(yearGpa);
+            state.gpa = state.gpaHistory.reduce((a,b)=>a+b,0) / state.gpaHistory.length;
+            state.cash += earn;
+            logEvent(`Earned ${formatMoney(earn)} from work. Yearly GPA: ${yearGpa.toFixed(1)}`);
+            
+            if (c.teen === 'console') { 
+                if (state.cash >= 500) { state.cash -= 500; logEvent("Bought a Game Console."); recordOppCost('Game Console', 500); }
+                else { logEvent("Tried to buy Game Console, but you have insufficient cash."); }
+            }
+            if (c.teen === 'car') {
+                if (state.cash >= 3000) { state.cash -= 3000; state.carsOwned.push({type: 'beater', age: 0, cost: 3000}); logEvent("Bought beater car for cash."); recordOppCost('Beater Car', 3000); }
+                else { logEvent("Tried to buy car, but you have insufficient cash."); }
+            }
+            if (c.investTeen > 0) {
+                let actualInvest = Math.min(c.investTeen, state.cash);
+                state.cash -= actualInvest;
+                state.stocks += actualInvest;
+                logEvent(`Invested ${formatMoney(actualInvest)} in stocks.`);
+            }
+        }
+
+        if (c.car === 'beaterCash' && state.cash >= 5000) { state.cash -= 5000; state.carsOwned.push({type: 'beater', age: 0, cost: 5000}); logEvent("Bought beater cash."); }
+        if (c.car === 'sedanCash' && state.cash >= 17000) { state.cash -= 17000; state.carsOwned.push({type: 'sedan', age: 0, cost: 17000}); logEvent("Bought used sedan cash."); recordOppCost('Sedan (Cash)', 12000); }
+        if (c.car === 'sedanFin' && state.cash >= 2000) { state.cash -= 2000; state.debt.auto += 15000; state.carsOwned.push({type: 'sedan', age: 0, cost: 17000}); recordOppCost('Sedan (Financed)', 12000); }
+        if (c.car === 'suvCash' && state.cash >= 40000) { state.cash -= 40000; state.carsOwned.push({type: 'suv', age: 0, cost: 40000}); logEvent("Bought Family SUV cash."); recordOppCost('Family SUV (Cash)', 35000); }
+        if (c.car === 'suvFin' && state.cash >= 5000) { state.cash -= 5000; state.debt.auto += 35000; state.carsOwned.push({type: 'suv', age: 0, cost: 40000}); recordOppCost('Family SUV (Financed)', 35000); }
+        if (c.car === 'truckCash' && state.cash >= 58000) { state.cash -= 58000; state.carsOwned.push({type: 'truck', age: 0, cost: 58000}); logEvent("Bought Truck cash."); recordOppCost('Truck (Cash)', 53000); }
+        if (c.car === 'truckFin' && state.cash >= 8000) { state.cash -= 8000; state.debt.auto += 50000; state.carsOwned.push({type: 'truck', age: 0, cost: 58000}); recordOppCost('Truck (Financed)', 53000); }
+        if (c.car === 'luxCash' && state.cash >= 70000) { state.cash -= 70000; state.carsOwned.push({type: 'lux', age: 0, cost: 70000}); logEvent("Bought Lux Sedan cash."); recordOppCost('Lux Sedan (Cash)', 65000); }
+        if (c.car === 'luxFin' && state.cash >= 10000) { state.cash -= 10000; state.debt.auto += 60000; state.carsOwned.push({type: 'lux', age: 0, cost: 70000}); recordOppCost('Lux Sedan (Financed)', 65000); }
+        if (c.car === 'corvetteCash' && state.cash >= 100000) { state.cash -= 100000; state.carsOwned.push({type: 'exotic', age: 0, cost: 100000}); logEvent("Bought Corvette cash."); recordOppCost('Corvette (Cash)', 95000); }
+        if (c.car === 'corvetteFin' && state.cash >= 20000) { state.cash -= 20000; state.debt.auto += 80000; state.carsOwned.push({type: 'exotic', age: 0, cost: 100000}); recordOppCost('Corvette (Financed)', 95000); }
+        if (c.car === 'bugattiCash' && state.cash >= 3000000) { state.cash -= 3000000; state.carsOwned.push({type: 'exotic', age: 0, cost: 3000000}); recordOppCost('Bugatti', 2995000); }
+
+        if (state.age === 18 || state.age === 19) {
+            if (c.sellMissionCar && state.carsOwned.length > 0) {
+                let car = state.carsOwned.pop();
+                let depValue = Math.max(500, car.cost * Math.pow(0.85, car.age));
+                state.cash += depValue;
+                logEvent(`Sold ${car.type} before mission for ${formatMoney(depValue)}.`);
+            }
+            if (state.cash >= 6000) {
+                state.cash -= 6000;
+                logEvent("Paid $6,000 for mission expenses from savings.");
+            } else {
+                logEvent(`Parents covered ${formatMoney(6000 - state.cash)} mission shortfall.`);
+                state.cash = 0;
+            }
+        }
+
+        if (c.career === 'military') { state.careerTrack = 'Military Enlisted'; logEvent("Enlisted in Military."); }
+        if (c.career === 'officer') { state.careerTrack = 'Military Officer'; logEvent("Joined Officer Track."); }
+        if (c.career === 'hpsp') { state.careerTrack = 'Military HPSP'; logEvent("Joined HPSP Medical Track."); }
+        if (c.career === 'trade') { state.careerTrack = 'Trade'; logEvent("Started Trade School."); }
+        if (c.career === 'workforce') { state.careerTrack = 'Workforce'; logEvent("Entered workforce."); }
+        
+        let chosenDegree = c.college || c.collegeMil;
+        let isWorking = c.collegeWork || c.collegeWorkMil;
+        if (c.career === 'college' || c.milExit === 'gibill') {
+            if (c.milExit === 'gibill') { state.giBill = true; state.careerTrack = 'None'; }
+            if (chosenDegree && chosenDegree !== 'none') {
+                let deg = DEGREES[chosenDegree];
+                state.currentDegree = chosenDegree;
+                state.isCollegeWorking = isWorking;
+                let yrs = isWorking ? Math.ceil(deg.yrs * 1.2) : deg.yrs;
+                state.collegeYearsLeft = yrs;
+                
+                let totalTuition = deg.cost * state.collegeYearsLeft;
+                if (state.giBill && deg.cost <= 15000) totalTuition = 0;
+                else if (state.giBill) totalTuition = (deg.cost - 15000) * state.collegeYearsLeft;
+                state.debt.student += totalTuition;
+                logEvent(`Started ${chosenDegree} degree. ${isWorking ? 'Working part-time.' : ''} Borrowed ${formatMoney(totalTuition)}.`);
+            }
+        }
+
+        if (c.milExit === 'stay') logEvent("Re-enlisted in military.");
+        if (c.milExit === 'leave') { state.careerTrack = 'Workforce'; logEvent("Left military for workforce."); }
+
+        if (c.marry && !state.spouse) {
+            let prob = state.collegeYearsLeft > 0 ? 0.80 : 0.30;
+            if (Math.random() < prob) {
+                state.spouse = true; 
+                state.spouseBaseMod = Math.random() * 10000; 
+                logEvent(`Got Married! Spouse's income will scale as they gain experience.`);
+            } else {
+                logEvent(`Prioritized finding a spouse, but didn't meet the right match this year.`);
+            }
+        }
+        
+        if (c.kids && state.spouse) { 
+            state.kids.push(0);
+            let deliveryCost = 0;
+            if (state.age < 26 || state.insurance) {
+                deliveryCost = 2000 + Math.random() * 3000;
+                chargeEmergency(deliveryCost, "Baby Delivery (Insured)");
+            } else {
+                deliveryCost = 14000 + Math.random() * 12000; 
+                chargeEmergency(deliveryCost, "Baby Delivery (UNINSURED)");
+            }
+            logEvent("Had a baby!"); 
+        }
+
+        if (c.spouseWork === 'home' && state.spouseWorking) { state.spouseWorking = false; logEvent("Spouse staying home."); }
+        else if (c.spouseWork === 'work' && !state.spouseWorking) { state.spouseWorking = true; logEvent("Spouse returning to work."); }
+
+        if (c.house && c.house !== 'none') {
+            if (state.housing !== 'Parents' && state.housing !== 'Apartment' && state.assets.home > 0) {
+                if (c.houseAction === 'sell') {
+                    let equity = state.assets.home - state.debt.mortgage;
+                    state.cash += equity;
+                    logEvent(`Sold previous home, extracted ${formatMoney(equity)} equity.`);
+                } else {
+                    state.rentals++;
+                    state.assets.realEstate += state.assets.home;
+                    state.debt.realEstate += state.debt.mortgage;
+                    logEvent("Converted previous home into a rental property.");
+                }
+                state.assets.home = 0; state.debt.mortgage = 0;
+            }
+
+            if (c.house === 'parents') { state.housing = 'Parents'; logEvent("Moved back with Parents."); }
+            if (c.house === 'apt') { state.housing = 'Apartment'; logEvent("Moved to Apartment."); }
+            if (c.house === 'condo' && state.cash >= 30000) { state.cash -= 30000; state.assets.home = 300000; state.debt.mortgage = 300000; state.housing = 'Condo'; }
+            if (c.house === 'starter' && state.cash >= 45000) { state.cash -= 45000; state.assets.home = 450000; state.debt.mortgage = 450000; state.housing = 'Starter House'; }
+            if (c.house === 'nice' && state.cash >= 75000) { state.cash -= 75000; state.assets.home = 750000; state.debt.mortgage = 750000; state.housing = 'Nice House'; }
+        }
+
+        if (c.invest > 0) {
+            let actualInvest = Math.min(c.invest, state.cash);
+            state.cash -= actualInvest; state.stocks += actualInvest;
+            logEvent(`Invested ${formatMoney(actualInvest)}.`);
+        }
+
+        state.vacation = c.vacation || 'none';
+        if (state.vacation === 'premium') recordOppCost('Premium Vacation', 10000);
+
+        if (c.rental === 'buyCash' && state.cash >= 60000) {
+            state.cash -= 60000; state.rentals++; state.assets.realEstate += 300000; state.debt.realEstate += 240000;
+            logEvent("Bought rental property.");
+        }
+        if (c.rental === 'buyCabin' && state.cash >= 50000) {
+            state.cash -= 50000; state.assets.cabin += 300000; state.debt.mortgage += 250000;
+            logEvent("Bought a Cabin/Second Home!");
+        }
+        if (c.rental === 'leverage') {
+            let equity = (state.assets.realEstate * 0.80) - state.debt.realEstate;
+            if (equity >= 60000) {
+                state.debt.realEstate += 60000; 
+                state.rentals++; state.assets.realEstate += 300000; state.debt.realEstate += 240000; 
+                logEvent("Leveraged equity for new rental!");
+            }
+        }
+    }
+
+    function fillMaxDebt() {
+        const totalDebt = state.debt.cc + state.debt.student + state.debt.auto + state.debt.mortgage + state.debt.realEstate;
+        document.getElementById('extra-payment').value = Math.min(totalDebt, state.cash).toFixed(0);
+    }
+
+    function showFinalReport() {
+        let yearsTo65 = Math.max(0, 65 - state.age);
+        const totalDebt = state.debt.cc + state.debt.student + state.debt.auto + state.debt.mortgage + state.debt.realEstate;
+        const totalAssets = state.cash + state.emergencyFund + state.stocks + state.assets.retirement + state.assets.home + state.assets.cabin + state.assets.realEstate;
+        const currentNetWorth = totalAssets - totalDebt;
+        
+        let estSavings = state.lastYearSavings > 0 ? state.lastYearSavings : 0;
+        let r = 0.07; 
+        
+        let fvNetWorth = currentNetWorth * Math.pow(1 + r, yearsTo65);
+        let fvContributions = estSavings * ((Math.pow(1 + r, yearsTo65) - 1) / r);
+        let finalRetirement = fvNetWorth + fvContributions;
+
+        document.getElementById('report-projected-nw').innerText = formatMoney(finalRetirement);
+        document.getElementById('report-projection-details').innerText = `Based on your current Net Worth of ${formatMoney(currentNetWorth)} and an estimated yearly savings of ${formatMoney(estSavings)}, compounded at 7% for ${yearsTo65} years.`;
+
+        let oppHtml = '';
+        if (state.bigPurchases.length === 0) {
+            oppHtml = `<li class="text-green-700 font-bold p-2 text-center">Incredible discipline! You avoided massive depreciating assets.</li>`;
+        } else {
+            state.bigPurchases.forEach(p => {
+                let yearsGrown = 65 - p.age;
+                let missedValue = p.amount * Math.pow(1 + r, yearsGrown);
+                oppHtml += `<li>Bought <b>${p.name}</b> at age ${p.age}. The ${formatMoney(p.amount)} extra you spent on this instead of investing it would have grown to <b class="text-red-500 font-black">${formatMoney(missedValue)}</b> by retirement.</li>`;
+            });
+        }
+        document.getElementById('report-opp-costs').innerHTML = oppHtml;
+        
+        document.getElementById('final-report-modal').classList.add('active');
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function restartGame() { initGame(); }
+
+    initGame();
+</script>
+</body>
+</html>
