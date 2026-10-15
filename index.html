@@ -85,9 +85,9 @@
             </div>
             
             <div class="mb-4 space-y-2 bg-blue-700 p-3 rounded-lg text-sm font-bold shadow-inner">
-                <label class="flex items-center gap-2 cursor-pointer">
+                <label id="wrap-tithing" class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" id="ch-tithing" class="w-4 h-4" checked onchange="renderUI()"> 
-                    Pay 10% Tithing / Charity
+                    <span>Pay 10% Tithing / Charity</span>
                 </label>
                 <div id="wrap-insurance" style="display:none;" class="flex flex-col gap-1">
                     <label class="flex items-center gap-2 cursor-pointer">
@@ -130,6 +130,8 @@
             <button onclick="advanceYear()" class="w-full bg-white text-blue-700 font-black text-xl py-4 rounded-lg shadow hover:bg-gray-100 transition mb-4">ADVANCE 1 YEAR ➔</button>
 
             <button onclick="showFinalReport()" class="w-full bg-indigo-900 text-indigo-100 font-bold text-sm py-3 rounded-lg shadow hover:bg-indigo-800 border border-indigo-400 transition">🔮 Project to Age 65 / Final Report</button>
+            
+            <button id="btn-eternity" onclick="showEternityReport()" style="display:none;" class="w-full bg-yellow-600 text-white font-bold text-sm py-3 mt-4 rounded-lg shadow hover:bg-yellow-500 border border-yellow-400 transition">✨ Fast Forward 200 Years</button>
         </div>
     </div>
 
@@ -181,6 +183,15 @@
     </div>
 </div>
 
+<!-- Eternity Modal -->
+<div id="eternity-modal" class="modal fixed inset-0 z-50 items-center justify-center overflow-y-auto py-10">
+    <div class="bg-white p-6 rounded-xl shadow-2xl max-w-4xl w-full mx-4 relative text-center">
+        <h2 class="text-4xl font-black text-yellow-600 mb-4">Eternity</h2>
+        <img id="eternity-img" src="" style="width: 100%; height: auto; border-radius: 8px; margin-top: 10px;" alt="Eternity Outcome" class="mb-6 shadow-lg border border-gray-300">
+        <button onclick="closeModal('eternity-modal')" class="bg-yellow-600 text-white font-bold py-4 px-8 rounded-lg hover:bg-yellow-700 w-full mt-4">Back to Simulator</button>
+    </div>
+</div>
+
 <script>
     const DEGREES = {
         'Doctor': { yrs: 8, cost: 40000, salary: 250000, gpa: 3.5 },
@@ -202,10 +213,11 @@
             assets: { home: 0, realEstate: 0, cabin: 0, retirement: 0 },
             debt: { student: 0, auto: 0, mortgage: 0, realEstate: 0, cc: 0 },
             rentals: 0, carsOwned: [], 
-            careerTrack: 'None', militaryYears: 0, giBill: false, collegeYearsLeft: 0, currentDegree: null, isCollegeWorking: false,
+            careerTrack: 'None', militaryYears: 0, giBill: false, collegeYearsLeft: 0, currentDegree: null, isCollegeWorking: false, annualTuition: 0,
             spouse: false, spouseWorking: true, spouseSalary: 0, spouseBaseMod: 0,
             kids: [], housing: 'Parents', vacation: 'None',
-            tithing: true, insurance: true, lastYearSavings: 0, bigPurchases: [],
+            tithing: true, tithingLocked: false, consecutiveNonTithingYears: 0, insurance: true, lastYearSavings: 0, bigPurchases: [],
+            totalYearsPlayed: 0, yearsTithingPaid: 0,
             log: [], modalEvents: []
         };
         logEvent("System initialized. You are 14 years old.");
@@ -346,7 +358,23 @@
     }
 
     function renderUI() {
-        state.tithing = document.getElementById('ch-tithing').checked;
+        const tithingCheckbox = document.getElementById('ch-tithing');
+        if (tithingCheckbox) {
+            state.tithing = tithingCheckbox.checked;
+        }
+
+        const wrapTithing = document.getElementById('wrap-tithing');
+        if (wrapTithing) {
+            if (state.tithingLocked) {
+                wrapTithing.innerHTML = `<input type="checkbox" id="ch-tithing" class="w-4 h-4" disabled> <span class="text-gray-400">Pay 10% Tithing / Charity (Not enough faith)</span>`;
+                state.tithing = false;
+                wrapTithing.classList.remove('cursor-pointer');
+            } else {
+                wrapTithing.innerHTML = `<input type="checkbox" id="ch-tithing" class="w-4 h-4" ${state.tithing ? 'checked' : ''} onchange="renderUI()"> <span>Pay 10% Tithing / Charity</span>`;
+                wrapTithing.classList.add('cursor-pointer');
+            }
+        }
+
         if (document.getElementById('ch-insurance')) state.insurance = document.getElementById('ch-insurance').checked;
 
         document.getElementById('ui-age').innerText = state.age;
@@ -390,6 +418,11 @@
 
         document.getElementById('adult-finance-panel').style.display = state.age >= 20 ? 'block' : 'none';
         
+        const eternityBtn = document.getElementById('btn-eternity');
+        if (eternityBtn) {
+            eternityBtn.style.display = state.age >= 30 ? 'block' : 'none';
+        }
+
         if (state.age >= 20 && !state.careerTrack.includes('Military')) {
             document.getElementById('wrap-insurance').style.display = 'flex';
             let costStr = state.age < 26 ? `Cost: $0/yr (On parents' plan until 26)` : `Cost: ${formatMoney(getInsurancePremium())}/yr`;
@@ -513,10 +546,16 @@
         if (state.rentals > 0) state.debt.realEstate = Math.max(0, state.debt.realEstate - (state.debt.realEstate * 0.02));
 
         // Deferred Student Loan Accrual vs Payment
-        if (state.collegeYearsLeft > 0 && state.debt.student > 0) {
-            let accrued = state.debt.student * 0.12;
-            state.debt.student += accrued;
-            logEvent(`Student loan deferred. Accrued ${formatMoney(accrued)} in interest (12%).`);
+        if (state.collegeYearsLeft > 0) {
+            if (state.annualTuition > 0) {
+                state.debt.student += state.annualTuition;
+                logEvent(`Disbursed annual tuition: ${formatMoney(state.annualTuition)}.`);
+            }
+            if (state.debt.student > 0) {
+                let accrued = state.debt.student * 0.12;
+                state.debt.student += accrued;
+                logEvent(`Student loan deferred. Accrued ${formatMoney(accrued)} in interest (12%).`);
+            }
         } else if (state.collegeYearsLeft === 0 && state.debt.student > 0) {
             state.debt.student = Math.max(0, state.debt.student - (state.debt.student * 0.02));
         }
@@ -545,11 +584,19 @@
             marketStatsHtml += `<div>${reProfit >= 0 ? '🟢' : '🔴'} <b>Real Estate:</b> ${(reReturn*100).toFixed(1)}% (${formatMoney(reProfit)})</div>`;
         }
 
+        // UPDATED DEBT CHECK LOGIC
+        let totalDebtEnd = state.debt.cc + state.debt.student + state.debt.auto + state.debt.mortgage + state.debt.realEstate;
+        
         if (exp.pureInterest > 0) {
-            marketStatsHtml += `<div class="text-red-600 mt-2">💸 <b>Interest Paid:</b> ${formatMoney(exp.pureInterest)} burned to the banks.</div>`;
-        } else {
-            marketStatsHtml += `<div class="text-green-600 mt-2">🛡️ <b>Interest Paid:</b> $0! You are debt free!</div>`;
+            marketStatsHtml += `<div class="text-red-600 mt-2">💸 <b>Interest Paid This Year:</b> ${formatMoney(exp.pureInterest)} burned to the banks.</div>`;
         }
+        
+        if (totalDebtEnd > 0) {
+            marketStatsHtml += `<div class="text-red-500 mt-2 text-sm">⚠️ <b>Current Total Debt:</b> ${formatMoney(totalDebtEnd)}</div>`;
+        } else {
+            marketStatsHtml += `<div class="text-green-600 mt-2">🛡️ <b>Debt Status:</b> $0! You are completely debt free!</div>`;
+        }
+
         document.getElementById('modal-market-stats').innerHTML = marketStatsHtml || "No investments or debt.";
 
         // --- RANDOM EVENTS & AGING ---
@@ -571,9 +618,10 @@
                 let repair = 1500 + (Math.random() * 3000);
                 chargeEmergency(repair, "Rental property maintenance");
             }
-            if (Math.random() < 0.05) {
-                logEvent("LAID OFF! You lost your primary salary for this year.");
+            if (!state.careerTrack.includes('Military') && Math.random() < 0.05) {
+                logEvent("LAID OFF! You lost your primary salary for this year. You must find a new career path.");
                 chargeEmergency(inc.you, "Loss of Income"); 
+                state.careerTrack = 'None';
             }
             if (Math.random() < 0.1) {
                 if (state.age < 26 || state.insurance) {
@@ -585,6 +633,27 @@
                 }
             }
         }
+
+        if (state.tithingLocked) {
+            if (Math.random() < 0.10) {
+                state.tithingLocked = false;
+                state.consecutiveNonTithingYears = 0;
+                logEvent("You feel a renewed sense of faith. You can choose to pay tithing again.");
+            }
+        } else {
+            if (!state.tithing) {
+                state.consecutiveNonTithingYears++;
+                if (state.consecutiveNonTithingYears >= 2) {
+                    state.tithingLocked = true;
+                    logEvent("You haven't paid tithing in 2 years. You lost the faith to pay it.");
+                }
+            } else {
+                state.consecutiveNonTithingYears = 0;
+            }
+        }
+
+        state.totalYearsPlayed++;
+        if (state.tithing) state.yearsTithingPaid++;
 
         state.age++;
         for (let i=0; i<state.kids.length; i++) state.kids[i]++;
@@ -651,7 +720,7 @@
             }
         }
 
-        if (state.age === 20 && state.careerTrack === 'None') {
+        if (state.age >= 20 && state.careerTrack === 'None') {
             html += `<h3 class="font-bold mb-1 text-white">Career Launch Path:</h3>
             <select id="ch-career" class="w-full p-2 rounded text-black mb-2" onchange="document.getElementById('deg-wrap').style.display = (this.value === 'college' ? 'block' : 'none')">
                 <option value="none">Select Path...</option>
@@ -914,11 +983,13 @@
                 let yrs = isWorking ? Math.ceil(deg.yrs * 1.2) : deg.yrs;
                 state.collegeYearsLeft = yrs;
                 
-                let totalTuition = deg.cost * state.collegeYearsLeft;
+                let totalTuition = deg.cost * deg.yrs;
                 if (state.giBill && deg.cost <= 15000) totalTuition = 0;
-                else if (state.giBill) totalTuition = (deg.cost - 15000) * state.collegeYearsLeft;
-                state.debt.student += totalTuition;
-                logEvent(`Started ${chosenDegree} degree. ${isWorking ? 'Working part-time.' : ''} Borrowed ${formatMoney(totalTuition)}.`);
+                else if (state.giBill) totalTuition = (deg.cost - 15000) * deg.yrs;
+                
+                state.annualTuition = totalTuition / yrs;
+                
+                logEvent(`Started ${chosenDegree} degree. ${isWorking ? 'Working part-time.' : ''} Will borrow ${formatMoney(state.annualTuition)} per year for ${yrs} years.`);
             }
         }
 
@@ -1035,6 +1106,23 @@
         document.getElementById('report-opp-costs').innerHTML = oppHtml;
         
         document.getElementById('final-report-modal').classList.add('active');
+    }
+
+    function showEternityReport() {
+        let isMarried = state.spouse;
+        let paidCurrentYear = state.tithing;
+        let ratio = state.totalYearsPlayed > 0 ? (state.yearsTithingPaid / state.totalYearsPlayed) : 0;
+        
+        let imgUrl = '5905.jpg'; // Default to disappointing eternity
+        
+        if (isMarried && paidCurrentYear) {
+            imgUrl = '5906.jpg'; // Successful eternity
+        } else if (!isMarried || (!paidCurrentYear && ratio < 0.5)) {
+            imgUrl = '5905.jpg'; // Disappointing eternity
+        }
+
+        document.getElementById('eternity-img').src = imgUrl;
+        document.getElementById('eternity-modal').classList.add('active');
     }
 
     function closeModal(id) { document.getElementById(id).classList.remove('active'); }
